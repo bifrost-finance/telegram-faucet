@@ -1,0 +1,6 @@
+/node_modules/
+/config/production.js
+/.idea
+.DS_Store
+*.log
+yarn.lock
