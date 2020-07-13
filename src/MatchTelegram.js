@@ -105,7 +105,7 @@ class MatchTelegram {
                                     const dot_address = await api.tx.assets.transfer("DOT", "Token", key, amount).signAndSend(root_dot);
                                     const ksm_address = await api.tx.assets.transfer("KSM", "Token", key, amount).signAndSend(root_ksm);
                                     const asg_address = await api.tx.balances.transfer(key, amount_asg).signAndSend(root_asg);
-                                    await bot.sendMessage(msg.chat.id,key + "\n" + "has issued 10 DOT / 10 KSM / 5 ASG in Bifrost for test, check it out at https://dashboard.bifrost.finance");
+                                    await bot.sendMessage("Registration address successful: " + msg.chat.id,key + "\n" + "has issued 10 DOT / 10 KSM / 5 ASG in Bifrost for test, check it out at https://dashboard.bifrost.finance");
                                     let message = key + ": DOT sent successfully" + dot_address + "," + "  " + "KSM sent successfully" + ksm_address + "  " + "ASG sent successfully" + asg_address;
                                     await logger.setMsg(message).console().file();
                                 }
@@ -116,7 +116,7 @@ class MatchTelegram {
                     console.log(error)
                 }
             } else {
-                await bot.sendMessage(msg.chat.id, "You can send /want@bifrost_faucet_bot {bifrost_address} to get 10 KSM / 10 DOT / 5 ASG in Bifrost for test (valueless)");
+                await bot.sendMessage(msg.chat.id, "You can send /want + BIFROST_ADDRESS to get 10 KSM / 10 DOT / 5 ASG in Bifrost for test (OWNS NO VALUE)");
             }
         })
     }
