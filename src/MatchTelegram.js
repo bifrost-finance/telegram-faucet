@@ -71,10 +71,13 @@ class MatchTelegram {
             const root_dot = keyring.addFromUri(root_seed_dot);
             const root_seed_ksm = config.root_seed.seed_ksm;
             const root_ksm = keyring.addFromUri(root_seed_ksm);
+            const root_seed_ausd = config.root_seed.seed_ausd;
+            const root_ausd = keyring.addFromUri(root_seed_ausd);
             const root_seed_asg = config.root_seed.seed_asg;
             const root_asg = keyring.addFromUri(root_seed_asg);
             const amount = 10 * 1000000000000;
             const amount_asg = 5 * 1000000000000;
+            const amount_ausd = 100 * 1000000000000;
 
             let flag = true;
             try {
@@ -102,11 +105,12 @@ class MatchTelegram {
                                         provider: wsProvider,
                                         types: parameter
                                     });
-                                    const dot_address = await api.tx.assets.transfer("DOT", "Token", key, amount).signAndSend(root_dot);
-                                    const ksm_address = await api.tx.assets.transfer("KSM", "Token", key, amount).signAndSend(root_ksm);
+                                    const dot_address = await api.tx.assets.transfer("DOT", key, amount).signAndSend(root_dot);
+                                    const ksm_address = await api.tx.assets.transfer("KSM", key, amount).signAndSend(root_ksm);
+                                    const ausd_address = await api.tx.assets.transfer("aUSD", key, amount_ausd).signAndSend(root_ausd);
                                     const asg_address = await api.tx.balances.transfer(key, amount_asg).signAndSend(root_asg);
-                                    await bot.sendMessage("Registration address successful: " + msg.chat.id,key + "\n" + "has issued 10 DOT / 10 KSM / 5 ASG in Bifrost for test, check it out at https://dashboard.bifrost.finance");
-                                    let message = key + ": DOT sent successfully" + dot_address + "," + "  " + "KSM sent successfully" + ksm_address + "  " + "ASG sent successfully" + asg_address;
+                                    await bot.sendMessage("Registration address successful: " + msg.chat.id,key + "\n" + "has issued 10 DOT / 10 KSM / 5 ASG / 100 aUSD in Bifrost for test, check it out at https://dash.bifrost.finance");
+                                    let message = key + ": DOT sent successfully" + dot_address + "," + "  " + "KSM sent successfully" + ksm_address + " " + "aUSD sent successfully" + ausd_address + "  " + "ASG sent successfully" + asg_address;
                                     await logger.setMsg(message).console().file();
                                 }
                             })
