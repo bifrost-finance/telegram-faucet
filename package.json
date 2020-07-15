@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@polkadot/api": "^1.25.0-beta.5",
+    "@polkadot/util-crypto": "^2.18.1",
     "axios": "^0.18.0",
     "babel-core": "7.0.0-bridge.0",
     "bn": "^1.0.5",

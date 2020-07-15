@@ -1,7 +1,7 @@
 import Agent from 'socks5-https-client/lib/Agent';
 import config from '../config';
 import Logger from './utils/Logger';
-import Parameter from '../config/parameter.json';
+import parameter from '../config/parameter.json';
 import redis from 'redis';
 import TelegramBot from 'node-telegram-bot-api';
 import {
@@ -13,6 +13,7 @@ import {
   hexToU8a,
   isHex,
 } from '@polkadot/util';
+import {cryptoWaitReady} from '@polkadot/util-crypto';
 
 class MatchTelegram {
 
@@ -28,7 +29,6 @@ class MatchTelegram {
       auth_pass: password,
     };
 
-    const parameter = Parameter;
     const failureTime = config.redis.failure_time;
     const client = redis.createClient(post, host, opts);
 
@@ -61,11 +61,13 @@ class MatchTelegram {
         type: 'sr25519',
       });
 
+      await cryptoWaitReady();
+
       const seed = {
-        dot: config.root_seed.seed_dot,
-        ksm: config.root_seed.seed_ksm,
-        ausd: config.root_seed.seed_ausd,
-        asg: config.root_seed.seed_asg,
+        dot: keyring.addFromUri(config.root_seed.seed_dot),
+        ksm: keyring.addFromUri(config.root_seed.seed_ksm),
+        ausd: keyring.addFromUri(config.root_seed.seed_ausd),
+        asg: keyring.addFromUri(config.root_seed.seed_asg),
       };
 
       const unit = 1000000000000;
@@ -79,11 +81,10 @@ class MatchTelegram {
 
       let flag = true;
       try {
-        let address = await keyring.encodeAddress(isHex(targetAddress)
+        await keyring.encodeAddress(isHex(targetAddress)
             ? hexToU8a(targetAddress)
             : keyring.decodeAddress(targetAddress));
-      }
-      catch (error) {
+      } catch (error) {
         flag = false;
       }
 
@@ -91,17 +92,17 @@ class MatchTelegram {
         try {
           await client.exists(targetAddress, async function(error, reply) {
             if (reply === 1) {
-              await bot.sendMessage(msg.chat.id, targetAddress + '\nhave already dripped, you can only drip once in 24 hours');
-              console.log(targetAddress + ' is exists');
-            }
-            else {
+              let drippedMessage = targetAddress + ' have already dripped!\n';
+              drippedMessage += 'you can only drip once in 24 hours';
+              await bot.sendMessage(msg.chat.id, drippedMessage);
+              console.log(targetAddress + ' have already dripped!');
+            } else {
               await client.set(targetAddress, JSON.stringify({
                 type: 1,
               }), async function(error, res) {
                 if (error) {
                   console.log(error);
-                }
-                else {
+                } else {
                   await client.expire(targetAddress, failureTime);
                   const wsProvider = new WsProvider(serverHost);
                   const api = await ApiPromise.create({
@@ -111,20 +112,25 @@ class MatchTelegram {
 
                   const transcation = {
                     asg: await api.tx.balances.transfer(targetAddress, amount.asg * unit).signAndSend(seed.asg),
+                    ausd: await api.tx.assets.transfer('aUSD', targetAddress, amount.ausd * unit).signAndSend(seed.ausd),
                     dot: await api.tx.assets.transfer('DOT', targetAddress, amount.dot * unit).signAndSend(seed.dot),
-                    ksm: await api.tx.assets.transfer('DOT', targetAddress, amount.ksm * unit).signAndSend(seed.ksm),
-                    ausd: await api.tx.assets.transfer('DOT', targetAddress, amount.ausd * unit).signAndSend(seed.ausd)
-                  }
+                    ksm: await api.tx.assets.transfer('KSM', targetAddress, amount.ksm * unit).signAndSend(seed.ksm),
+                  };
 
-                  let message = "🥳 Registration address successful! \n\n";
-                  message += targetAddress + " has received\n";
-                  message += amount.asg + " ASG      " + amount.ausd + " aUSD\n";
-                  message += amount.dot + " DOT      " + amount.ksm + " KSM\n";
-                  message += "These token just for test, OWNS NO VALUE, usd it in https://dash.bifrost.finance";
+                  let message = '🥳 Registration address successful! \n\n';
+                  message += targetAddress + ' has received\n';
+                  message += amount.asg + ' ASG      ' + amount.ausd + ' aUSD\n';
+                  message += amount.dot + ' DOT      ' + amount.ksm + ' KSM\n';
+                  message += 'These token just for test, OWNS NO VALUE, usd it in https://dash.bifrost.finance';
 
                   await bot.sendMessage(msg.chat.id, message);
 
-                  let log = targetAddress + transcation.toString();
+                  let log = targetAddress + '\n';
+                  log += "ASG: " + transcation.asg.toString() + "\n";
+                  log += "aUSD: " + transcation.ausd.toString() + "\n";
+                  log += "DOT: " + transcation.dot.toString() + "\n";
+                  log += "KSM: " + transcation.ksm.toString() + "\n";
+
                   await logger.setMsg(log).console().file();
                 }
               });
