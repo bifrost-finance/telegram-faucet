@@ -118,7 +118,7 @@ class MatchTelegram {
                   };
 
                   let message = '🥳 Registration address successful! \n\n';
-                  message += '[' + targetAddress + '] has received: \n';
+                  message += targetAddress + ' has received: \n';
                   message += amount.asg + ' ASG      ' + amount.ausd + ' aUSD\n';
                   message += amount.dot + ' DOT      ' + amount.ksm + ' KSM\n\n';
                   message += 'Usd them in https://dash.bifrost.finance, for test, OWNS NO VALUE';
