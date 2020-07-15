@@ -49,12 +49,6 @@ class MatchTelegram {
       },
     });
 
-    const AssetSymbol = {
-      DOT: 0,
-      KSM: 1,
-      EOS: 2,
-    };
-
     bot.onText(/\/want/, async function onLoveText(msg) {
       let data = msg.text;
       let get_str = data.slice(data.indexOf(' ') + 1);
@@ -95,7 +89,7 @@ class MatchTelegram {
 
       if (flag) {
         try {
-          await client.exists(key, async function(error, reply) {
+          await client.exists(targetAddress, async function(error, reply) {
             if (reply === 1) {
               await bot.sendMessage(msg.chat.id, targetAddress + '\nhave already dripped, you can only drip once in 24 hours');
               console.log(targetAddress + ' is exists');
