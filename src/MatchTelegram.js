@@ -92,8 +92,8 @@ class MatchTelegram {
         try {
           await client.exists(targetAddress, async function(error, reply) {
             if (reply === 1) {
-              let drippedMessage = targetAddress + ' have already dripped!\n';
-              drippedMessage += 'you can only drip once in 24 hours';
+              let drippedMessage = targetAddress + '\n';
+              drippedMessage += 'has already dripped, you can only drip once in 24 hours';
               await bot.sendMessage(msg.chat.id, drippedMessage);
               console.log(targetAddress + ' have already dripped!');
             } else {
