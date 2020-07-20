@@ -17,6 +17,16 @@ import {cryptoWaitReady} from '@polkadot/util-crypto';
 
 class MatchTelegram {
 
+  static generateDripKey(key)
+  {
+    return 'dripped:' + key
+  }
+
+  static generateMatchKey(key)
+  {
+    return 'matched:' + key
+  }
+
   static async start() {
     const logger = new Logger();
     let msg = `[Started] liebi-telegram-faucet, Running environment：${process.env.NODE_ENV}`;
@@ -90,20 +100,21 @@ class MatchTelegram {
 
       if (flag) {
         try {
-          await client.exists(targetAddress, async function(error, reply) {
+          await client.exists(self.generateDripKey(targetAddress), async function(error, reply) {
             if (reply === 1) {
               let drippedMessage = targetAddress + '\n';
               drippedMessage += 'has already dripped, you can only drip once in 24 hours';
               await bot.sendMessage(msg.chat.id, drippedMessage);
               console.log(targetAddress + ' have already dripped!');
             } else {
-              await client.set(targetAddress, JSON.stringify({
+              await client.set(self.generateDripKey(targetAddress), JSON.stringify({
                 type: 1,
               }), async function(error, res) {
                 if (error) {
                   console.log(error);
                 } else {
-                  await client.expire(targetAddress, failureTime);
+                  await client.expire(self.generateDripKey(targetAddress), failureTime);
+                  await client.set(self.generateMatchKey(targetAddress), 1);
                   const wsProvider = new WsProvider(serverHost);
                   const api = await ApiPromise.create({
                     provider: wsProvider,
