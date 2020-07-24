@@ -54,7 +54,15 @@ class MatchTelegram {
       let targetAddress = get_str.replace(/^\s*/, '');
       console.log(targetAddress);
       client.select('15');
-      const serverHost = config.server.host;
+
+      const hostResources = [
+          'wss://n1.testnet.liebi.com/',
+          'wss://n2.testnet.liebi.com/',
+          'wss://n3.testnet.liebi.com/'
+      ];
+
+      let residue = new Date().getMinutes() % 3;
+      let serverHost = hostResources[residue];
 
       const keyring = new Keyring({
         type: 'sr25519',
@@ -126,6 +134,7 @@ class MatchTelegram {
                   await bot.sendMessage(msg.chat.id, message);
 
                   let log = targetAddress + '\n';
+                  log += "HOST: " + serverHost + '\n';
                   log += "ASG: " + transcation.asg.toString() + "\n";
                   log += "aUSD: " + transcation.ausd.toString() + "\n";
                   log += "DOT: " + transcation.dot.toString() + "\n";
