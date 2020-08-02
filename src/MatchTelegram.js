@@ -129,7 +129,7 @@ class MatchTelegram {
                   message += targetAddress + ' has received: \n';
                   message += amount.asg + ' ASG      ' + amount.ausd + ' aUSD\n';
                   message += amount.dot + ' DOT      ' + amount.ksm + ' KSM\n\n';
-                  message += 'Use them in https://dash.bifrost.finance for test (OWNS NO VALUE)';
+                  message += 'Explorer: https://bifrost.subscan.io\nUse them in https://dash.bifrost.finance for test (OWNS NO VALUE)';
 
                   await bot.sendMessage(msg.chat.id, message);
 
