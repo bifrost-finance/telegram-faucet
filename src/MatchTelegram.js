@@ -49,6 +49,14 @@ class MatchTelegram {
     });
 
     bot.onText(/\/want/, async function onLoveText(msg) {
+      if(msg.chat.type !== 'supergroup') {
+        await bot.sendMessage(msg.chat.id, 'Bifrost faucet bot don\'t support private chat, please send command in Bifrost Faucet Group');
+
+        console.log('Bifrost faucet bot don\'t support private chat, please send command in Bifrost Faucet Group');
+
+        return false;
+      }
+
       let data = msg.text;
       let get_str = data.slice(data.indexOf(' ') + 1);
       let targetAddress = get_str.replace(/^\s*/, '');
