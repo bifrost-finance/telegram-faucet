@@ -56,12 +56,12 @@ class MatchTelegram {
       client.select('15');
 
       const hostResources = [
-          // 'wss://n1.testnet.liebi.com/',
+          'wss://n1.testnet.liebi.com/',
           'wss://n2.testnet.liebi.com/',
-          // 'wss://n3.testnet.liebi.com/'
+          'wss://n3.testnet.liebi.com/'
       ];
 
-      let residue = new Date().getMinutes() % 1;
+      let residue = new Date().getMinutes() % 3;
       let serverHost = hostResources[residue];
 
       const keyring = new Keyring({
