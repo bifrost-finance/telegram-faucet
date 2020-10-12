@@ -107,9 +107,9 @@ class MatchTelegram {
         try {
           await client.exists("tg:" + msg.from.id, async function(error, reply) {
             console.log(`tg:${msg.from.id} => reply: ${reply}`);
-            if (!reply) {
+            if (reply === 1) {
               let message = 'you can only drip once in 24 hours';
-              await bot.sendMessage(msg.from.id, message);
+              await bot.sendMessage(msg.chat.id, message);
             } else {
               await client.exists("dripped:" + targetAddress, async function(error, reply) {
                 if (reply === 1) {
