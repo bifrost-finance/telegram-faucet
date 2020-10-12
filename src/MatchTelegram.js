@@ -105,49 +105,61 @@ class MatchTelegram {
 
       if (flag) {
         try {
-          await client.exists("dripped:" + targetAddress, async function(error, reply) {
-            if (reply === 1) {
-              let drippedMessage = targetAddress + '\n';
-              drippedMessage += 'has already dripped, you can only drip once in 24 hours';
-              await bot.sendMessage(msg.chat.id, drippedMessage);
-              console.log(targetAddress + ' have already dripped!');
+          await client.exists("tg:" + msg.from.id, async function(error, reply) {
+            console.log(`tg:${msg.from.id} => reply: ${reply}`);
+            if (!reply) {
+              let message = 'you can only drip once in 24 hours';
+              await bot.sendMessage(msg.from.id, message);
             } else {
-              await client.set("matched:" + targetAddress, 1);
+              await client.exists("dripped:" + targetAddress, async function(error, reply) {
+                if (reply === 1) {
+                  let drippedMessage = targetAddress + '\n';
+                  drippedMessage += 'has already dripped, you can only drip once in 24 hours';
+                  await bot.sendMessage(msg.chat.id, drippedMessage);
+                  console.log(targetAddress + ' have already dripped!');
+                } else {
+                  await client.set("matched:" + targetAddress, 1);
 
-              const wsProvider = new WsProvider(serverHost);
-              const api = await ApiPromise.create({
-                provider: wsProvider,
-                types: parameter,
+                  const wsProvider = new WsProvider(serverHost);
+                  const api = await ApiPromise.create({
+                    provider: wsProvider,
+                    types: parameter,
+                  });
+
+                  const transcation = {
+                    asg: await api.tx.balances.transfer(targetAddress, amount.asg * unit).signAndSend(seed.asg),
+                    ausd: await api.tx.assets.transfer('aUSD', targetAddress, amount.ausd * unit).signAndSend(seed.ausd),
+                    dot: await api.tx.assets.transfer('DOT', targetAddress, amount.dot * unit).signAndSend(seed.dot),
+                    ksm: await api.tx.assets.transfer('KSM', targetAddress, amount.ksm * unit).signAndSend(seed.ksm),
+                  };
+
+                  let message = '🥳 Registration address successful! \n\n';
+                  message += targetAddress + ' has received: \n';
+                  message += amount.asg + ' ASG      ' + amount.ausd + ' aUSD\n';
+                  message += amount.dot + ' DOT      ' + amount.ksm + ' KSM\n\n';
+                  message += 'Explorer: https://bifrost.subscan.io\nUse them in https://dash.bifrost.finance for test (OWNS NO VALUE)';
+
+                  await bot.sendMessage(msg.chat.id, message);
+
+                  let log = targetAddress + '\n';
+                  log += "HOST: " + serverHost + '\n';
+                  log += "ASG: " + transcation.asg.toString() + "\n";
+                  log += "aUSD: " + transcation.ausd.toString() + "\n";
+                  log += "DOT: " + transcation.dot.toString() + "\n";
+                  log += "KSM: " + transcation.ksm.toString() + "\n";
+
+                  await client.set("dripped:" + targetAddress, JSON.stringify({type: 1}))
+                  await client.expire("dripped:" + targetAddress, failureTime);
+
+                  await client.set("tg:" + msg.from.id, JSON.stringify({type: 1}))
+                  await client.expire("tg:" + msg.from.id, failureTime);
+
+                  await logger.setMsg(log).console().file();
+                }
               });
-
-              const transcation = {
-                asg: await api.tx.balances.transfer(targetAddress, amount.asg * unit).signAndSend(seed.asg),
-                ausd: await api.tx.assets.transfer('aUSD', targetAddress, amount.ausd * unit).signAndSend(seed.ausd),
-                dot: await api.tx.assets.transfer('DOT', targetAddress, amount.dot * unit).signAndSend(seed.dot),
-                ksm: await api.tx.assets.transfer('KSM', targetAddress, amount.ksm * unit).signAndSend(seed.ksm),
-              };
-
-              let message = '🥳 Registration address successful! \n\n';
-              message += targetAddress + ' has received: \n';
-              message += amount.asg + ' ASG      ' + amount.ausd + ' aUSD\n';
-              message += amount.dot + ' DOT      ' + amount.ksm + ' KSM\n\n';
-              message += 'Explorer: https://bifrost.subscan.io\nUse them in https://dash.bifrost.finance for test (OWNS NO VALUE)';
-
-              await bot.sendMessage(msg.chat.id, message);
-
-              let log = targetAddress + '\n';
-              log += "HOST: " + serverHost + '\n';
-              log += "ASG: " + transcation.asg.toString() + "\n";
-              log += "aUSD: " + transcation.ausd.toString() + "\n";
-              log += "DOT: " + transcation.dot.toString() + "\n";
-              log += "KSM: " + transcation.ksm.toString() + "\n";
-
-              await client.set("dripped:" + targetAddress, JSON.stringify({type: 1}))
-              await client.expire("dripped:" + targetAddress, failureTime);
-
-              await logger.setMsg(log).console().file();
             }
           });
+
         }
         catch (error) {
           console.log(error);
