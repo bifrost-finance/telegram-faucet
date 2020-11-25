@@ -64,8 +64,8 @@ class MatchTelegram {
       client.select('15');
 
       const hostResources = [
-          'wss://n1.testnet.liebi.com/',
-          'wss://n2.testnet.liebi.com/',
+          'wss://testnet.liebi.com/',
+          'wss://testnet.liebi.com/',
           // 'wss://n3.testnet.liebi.com/'
       ];
 
