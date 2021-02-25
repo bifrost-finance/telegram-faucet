@@ -49,13 +49,14 @@ class MatchTelegram {
     });
 
     bot.onText(/\/want/, async function onLoveText(msg) {
-      if(msg.chat.type !== 'supergroup') {
-        await bot.sendMessage(msg.chat.id, 'Bifrost faucet bot don\'t support private chat, please send command in Bifrost Faucet Group');
+      // console.log('777',msg)
+      // if(msg.chat.type !== 'supergroup') {
+      //   await bot.sendMessage(msg.chat.id, 'Bifrost faucet bot don\'t support private chat, please send command in Bifrost Faucet Group');
 
-        console.log('Bifrost faucet bot don\'t support private chat, please send command in Bifrost Faucet Group');
+      //   console.log('Bifrost faucet bot don\'t support private chat, please send command in Bifrost Faucet Group');
 
-        return false;
-      }
+      //   return false;
+      // }
 
       let data = msg.text;
       let get_str = data.slice(data.indexOf(' ') + 1);
@@ -64,9 +65,11 @@ class MatchTelegram {
       client.select('15');
 
       const hostResources = [
-          'wss://testnet.liebi.com/',
-          'wss://testnet.liebi.com/',
+          // 'wss://testnet.liebi.com/',
+          // 'wss://testnet.liebi.com/',
           // 'wss://n3.testnet.liebi.com/'
+          'ws://118.126.112.5:9941/',
+          'ws://118.126.112.5:9941/'
       ];
 
       let residue = new Date().getMinutes() % 2;
@@ -81,8 +84,8 @@ class MatchTelegram {
       const seed = {
         dot: keyring.addFromUri(config.root_seed.seed_dot),
         ksm: keyring.addFromUri(config.root_seed.seed_ksm),
-        ausd: keyring.addFromUri(config.root_seed.seed_ausd),
-        asg: keyring.addFromUri(config.root_seed.seed_asg),
+        // ausd: keyring.addFromUri(config.root_seed.seed_ausd),
+        // asg: keyring.addFromUri(config.root_seed.seed_asg),
       };
 
       const unit = 1000000000000;
@@ -90,8 +93,8 @@ class MatchTelegram {
       const amount = {
         dot: 10,
         ksm: 10,
-        ausd: 100,
-        asg: 20,
+        // ausd: 100,
+        // asg: 20,
       };
 
       let flag = true;
@@ -118,6 +121,7 @@ class MatchTelegram {
                   await bot.sendMessage(msg.chat.id, drippedMessage);
                   console.log(targetAddress + ' have already dripped!');
                 } else {
+                  console.log("123===")
                   await client.set("matched:" + targetAddress, 1);
 
                   const wsProvider = new WsProvider(serverHost);
@@ -125,17 +129,18 @@ class MatchTelegram {
                     provider: wsProvider,
                     types: parameter,
                   });
+                  console.log("130===")
 
                   const transcation = {
-                    asg: await api.tx.balances.transfer(targetAddress, amount.asg * unit).signAndSend(seed.asg),
-                    ausd: await api.tx.assets.transfer('aUSD', targetAddress, amount.ausd * unit).signAndSend(seed.ausd),
-                    dot: await api.tx.assets.transfer('DOT', targetAddress, amount.dot * unit).signAndSend(seed.dot),
-                    ksm: await api.tx.assets.transfer('KSM', targetAddress, amount.ksm * unit).signAndSend(seed.ksm),
+                    // asg: await api.tx.balances.transfer(targetAddress, amount.asg * unit).signAndSend(seed.asg),
+                    // ausd: await api.tx.assets.transfer('aUSD', targetAddress, amount.ausd * unit).signAndSend(seed.ausd),
+                    dot: await api.tx.assets.transfer(2, targetAddress, amount.dot * unit).signAndSend(seed.dot),
+                    ksm: await api.tx.assets.transfer(4, targetAddress, amount.ksm * unit).signAndSend(seed.ksm),
                   };
 
                   let message = '🥳 Registration address successful! \n\n';
                   message += targetAddress + ' has received: \n';
-                  message += amount.asg + ' ASG      ' + amount.ausd + ' aUSD\n';
+                  // message += amount.asg + ' ASG      ' + amount.ausd + ' aUSD\n';
                   message += amount.dot + ' DOT      ' + amount.ksm + ' KSM\n\n';
                   message += 'Explorer: https://bifrost.subscan.io\nUse them in https://dash.bifrost.finance for test (OWNS NO VALUE)';
 
@@ -143,8 +148,8 @@ class MatchTelegram {
 
                   let log = targetAddress + '\n';
                   log += "HOST: " + serverHost + '\n';
-                  log += "ASG: " + transcation.asg.toString() + "\n";
-                  log += "aUSD: " + transcation.ausd.toString() + "\n";
+                  // log += "ASG: " + transcation.asg.toString() + "\n";
+                  // log += "aUSD: " + transcation.ausd.toString() + "\n";
                   log += "DOT: " + transcation.dot.toString() + "\n";
                   log += "KSM: " + transcation.ksm.toString() + "\n";
 
@@ -169,6 +174,22 @@ class MatchTelegram {
         await bot.sendMessage(msg.chat.id, 'You can send /want + BIFROST_ADDRESS to get some token in Bifrost for test (OWNS NO VALUE)');
       }
     });
+
+    bot.onText(/\/drop/, async function onMsg(msg) {
+      let data = msg.text;
+      console.log('match----',data,msg)
+      let get_str = data.slice(data.indexOf(' ') + 1);
+      let targetAddress = get_str.replace(/^\s*/, '');
+      console.log(targetAddress);
+      // client.select('15');
+    });
+
+    bot.on('editMessageText', function onMessage(msg) {
+      bot.sendMessage(msg.chat.id, 'I am alive on!');
+    });
+    // bot.on('message', function onMessage(msg) {
+    //   bot.sendMessage(msg.chat.id, 'I am alive on OpenShift!');
+    // });
   }
 }
 

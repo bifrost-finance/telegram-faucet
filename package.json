@@ -9,8 +9,8 @@
     "prod": "cross-env NODE_ENV=production babel-node liebi-telegram-faucet.js"
   },
   "dependencies": {
-    "@polkadot/api": "^1.35.0-beta.5",
-    "@polkadot/util-crypto": "^2.18.1",
+    "@polkadot/api": "^3",
+    "@polkadot/util-crypto": "^5.7.1",
     "axios": "^0.18.0",
     "babel-core": "7.0.0-bridge.0",
     "bn": "^1.0.5",
