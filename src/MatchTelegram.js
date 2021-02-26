@@ -13,7 +13,7 @@ import {
   hexToU8a,
   isHex,
 } from '@polkadot/util';
-import { cryptoWaitReady } from '@polkadot/util-crypto';
+import { cryptoWaitReady, schnorrkelDerivePublic } from '@polkadot/util-crypto';
 
 class MatchTelegram {
   static async start() {
@@ -81,12 +81,12 @@ class MatchTelegram {
 
       await cryptoWaitReady();
 
-      const seed = {
-        dot: keyring.addFromUri(config.root_seed.seed_dot),
-        ksm: keyring.addFromUri(config.root_seed.seed_ksm),
-        // ausd: keyring.addFromUri(config.root_seed.seed_ausd),
-        // asg: keyring.addFromUri(config.root_seed.seed_asg),
-      };
+      // const seed = {
+      //   dot: keyring.addFromUri(config.root_seed.seed_dot),
+      //   ksm: keyring.addFromUri(config.root_seed.seed_ksm),
+      //   ausd: keyring.addFromUri(config.root_seed.seed_ausd),
+      //   asg: keyring.addFromUri(config.root_seed.seed_asg),
+      // };
 
       const unit = 1000000000000;
 
@@ -123,12 +123,18 @@ class MatchTelegram {
                 } else {
                   await client.set("matched:" + targetAddress, 1);
 
+                  const promiseLpop = (key) =>
+                    new Promise((resolve, reject) => {
+                      client.lpop(key, (error, data) => {
+                        error ? reject(error) : resolve(data);
+                      });
+                    });
+
                   const wsProvider = new WsProvider(serverHost);
                   const api = await ApiPromise.create({
                     provider: wsProvider,
                     types: parameter,
                   });
-
                   const transcation = [
                     // asg: await api.tx.balances.transfer(targetAddress, amount.asg * unit).signAndSend(seed.asg),
                     // ausd: await api.tx.assets.transfer('aUSD', targetAddress, amount.ausd * unit).signAndSend(seed.ausd),
@@ -136,17 +142,8 @@ class MatchTelegram {
                     api.tx.assets.transfer(2, targetAddress, amount.dot * unit),
                     api.tx.assets.transfer(4, targetAddress, amount.ksm * unit),
                   ];
-
-                  const promiseLpop = (key) =>
-                    new Promise((resolve, reject) => {
-                      client.lpop(key, (error, data) => {
-                        error ? reject(error) : resolve(data);
-                      });
-                    });
                   const privateKey = await promiseLpop('private_key_list');
-                  // let privateKey = await client.lpop('l');
-                  // console.log('privateKey', privateKey)
-                  if (privateKey == null) {
+                  if (privateKey == null) {  // redis中私钥被取光
                     let message = 'Currently busy, please try again later!';
                     await bot.sendMessage(msg.chat.id, message);
                     return;
@@ -154,10 +151,19 @@ class MatchTelegram {
 
                   let batchHash = await api.tx.utility
                     .batch(transcation)
-                    .signAndSend(keyring.addFromUri(privateKey));
+                    .signAndSend(keyring.addFromUri(privateKey))
+                    .catch(async function (reason) { });
 
-                  await client.rpush('private_key_list', privateKey);
-                  
+                  if (batchHash) {
+                    await client.rpush('private_key_list', privateKey);
+                    // console.log('okk', privateKey, batchHash.toHex())
+                  } else {
+                    await client.rpush('private_key_list', privateKey);
+                    let message = 'Currently busy, please try again later!';
+                    await bot.sendMessage(msg.chat.id, message);
+                    return;
+                  }
+
                   let message = '🥳 Registration address successful! \n\n';
                   message += targetAddress + ' has received: \n';
                   // message += amount.asg + ' ASG      ' + amount.ausd + ' aUSD\n';
@@ -174,11 +180,11 @@ class MatchTelegram {
                   // log += "DOT: " + transcation.dot.toString() + "\n";
                   // log += "KSM: " + transcation.ksm.toString() + "\n";
 
-                  // await client.set("dripped:" + targetAddress, JSON.stringify({ type: 1 }))
-                  // await client.expire("dripped:" + targetAddress, failureTime);
+                  await client.set("dripped:" + targetAddress, JSON.stringify({ type: 1 }))
+                  await client.expire("dripped:" + targetAddress, failureTime);
 
-                  // await client.set("tg:" + msg.from.id, JSON.stringify({ type: 1 }))
-                  // await client.expire("tg:" + msg.from.id, failureTime);
+                  await client.set("tg:" + msg.from.id, JSON.stringify({ type: 1 }))
+                  await client.expire("tg:" + msg.from.id, failureTime);
 
                   await logger.setMsg(log).console().file();
                 }
