@@ -26,6 +26,14 @@ const environments = {
     seed_ausd: '',
     sudo_seed: '',
   },
+  asset: {
+    dot: 2,
+    eth: 4
+  },
+  seed_list: [
+    '',
+    ''
+  ]
 };
 
 module.exports = environments;

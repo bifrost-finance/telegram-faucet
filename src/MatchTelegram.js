@@ -34,6 +34,11 @@ class MatchTelegram {
     client.on('error', function (error) {
       console.log(error);
     });
+    client.select('15');
+    await client.del('private_key_list');
+    for (let seed of config.seed_list) {
+      await client.rpush('private_key_list', seed);
+    }
 
     const token = config.telegram.key;
 
@@ -48,15 +53,14 @@ class MatchTelegram {
       },
     });
 
-    bot.onText(/\/want/, async function onLoveText(msg) {
-      // console.log('777',msg)
-      // if(msg.chat.type !== 'supergroup') {
-      //   await bot.sendMessage(msg.chat.id, 'Bifrost faucet bot don\'t support private chat, please send command in Bifrost Faucet Group');
+    bot.onText(/\/drop/, async function onLoveText(msg) {
+      if (msg.chat.type !== 'supergroup') {
+        await bot.sendMessage(msg.chat.id, 'Bifrost faucet bot don\'t support private chat, please send command in Bifrost Faucet Group');
 
-      //   console.log('Bifrost faucet bot don\'t support private chat, please send command in Bifrost Faucet Group');
+        console.log('Bifrost faucet bot don\'t support private chat, please send command in Bifrost Faucet Group');
 
-      //   return false;
-      // }
+        return false;
+      }
 
       let data = msg.text;
       let get_str = data.slice(data.indexOf(' ') + 1);
@@ -91,8 +95,8 @@ class MatchTelegram {
       const unit = 1000000000000;
 
       const amount = {
-        dot: 10,
-        ksm: 10,
+        dot: 200,
+        eth: 5,
         // ausd: 100,
         // asg: 20,
       };
@@ -139,8 +143,8 @@ class MatchTelegram {
                     // asg: await api.tx.balances.transfer(targetAddress, amount.asg * unit).signAndSend(seed.asg),
                     // ausd: await api.tx.assets.transfer('aUSD', targetAddress, amount.ausd * unit).signAndSend(seed.ausd),
                     // dot: api.tx.assets.transfer(2, targetAddress, amount.dot * unit),
-                    api.tx.assets.transfer(2, targetAddress, amount.dot * unit),
-                    api.tx.assets.transfer(4, targetAddress, amount.ksm * unit),
+                    api.tx.assets.transfer(config.asset.dot, targetAddress, amount.dot * unit),
+                    api.tx.assets.transfer(config.asset.eth, targetAddress, amount.eth * unit),
                   ];
                   const privateKey = await promiseLpop('private_key_list');
                   if (privateKey == null) {  // redis中私钥被取光
@@ -167,7 +171,7 @@ class MatchTelegram {
                   let message = '🥳 Registration address successful! \n\n';
                   message += targetAddress + ' has received: \n';
                   // message += amount.asg + ' ASG      ' + amount.ausd + ' aUSD\n';
-                  message += amount.dot + ' DOT      ' + amount.ksm + ' KSM\n\n';
+                  message += amount.dot + ' DOT      ' + amount.eth + ' ETH\n\n';
                   message += 'Explorer: https://bifrost.subscan.io\nUse them in https://dash.bifrost.finance for test (OWNS NO VALUE)';
 
                   await bot.sendMessage(msg.chat.id, message);
@@ -201,22 +205,6 @@ class MatchTelegram {
         await bot.sendMessage(msg.chat.id, 'You can send /want + BIFROST_ADDRESS to get some token in Bifrost for test (OWNS NO VALUE)');
       }
     });
-
-    bot.onText(/\/drop/, async function onMsg(msg) {
-      let data = msg.text;
-      console.log('match----', data, msg)
-      let get_str = data.slice(data.indexOf(' ') + 1);
-      let targetAddress = get_str.replace(/^\s*/, '');
-      console.log(targetAddress);
-      // client.select('15');
-    });
-
-    bot.on('editMessageText', function onMessage(msg) {
-      bot.sendMessage(msg.chat.id, 'I am alive on!');
-    });
-    // bot.on('message', function onMessage(msg) {
-    //   bot.sendMessage(msg.chat.id, 'I am alive on OpenShift!');
-    // });
   }
 }
 
