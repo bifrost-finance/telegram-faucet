@@ -13,13 +13,13 @@ import {
   hexToU8a,
   isHex,
 } from '@polkadot/util';
-import {cryptoWaitReady} from '@polkadot/util-crypto';
+import { cryptoWaitReady } from '@polkadot/util-crypto';
 
 class MatchTelegram {
   static async start() {
     const logger = new Logger();
     let msg = `[Started] liebi-telegram-faucet, Running environment：${process.env.NODE_ENV}`;
-    await ( await logger.setMsg(msg).console().file() );
+    await (await logger.setMsg(msg).console().file());
 
     const host = config.redis.host;
     const post = config.redis.post;
@@ -31,7 +31,7 @@ class MatchTelegram {
     const failureTime = config.redis.failure_time;
     const client = redis.createClient(post, host, opts);
 
-    client.on('error', function(error) {
+    client.on('error', function (error) {
       console.log(error);
     });
 
@@ -65,11 +65,11 @@ class MatchTelegram {
       client.select('15');
 
       const hostResources = [
-          // 'wss://testnet.liebi.com/',
-          // 'wss://testnet.liebi.com/',
-          // 'wss://n3.testnet.liebi.com/'
-          'ws://118.126.112.5:9941/',
-          'ws://118.126.112.5:9941/'
+        // 'wss://testnet.liebi.com/',
+        // 'wss://testnet.liebi.com/',
+        // 'wss://n3.testnet.liebi.com/'
+        'ws://118.126.112.5:9941/',
+        'ws://118.126.112.5:9941/'
       ];
 
       let residue = new Date().getMinutes() % 2;
@@ -100,28 +100,27 @@ class MatchTelegram {
       let flag = true;
       try {
         await keyring.encodeAddress(isHex(targetAddress)
-            ? hexToU8a(targetAddress)
-            : keyring.decodeAddress(targetAddress));
+          ? hexToU8a(targetAddress)
+          : keyring.decodeAddress(targetAddress));
       } catch (error) {
         flag = false;
       }
 
       if (flag) {
         try {
-          await client.exists("tg:" + msg.from.id, async function(error, reply) {
+          await client.exists("tg:" + msg.from.id, async function (error, reply) {
             console.log(`tg:${msg.from.id} => reply: ${reply}`);
             if (reply === 1) {
               let message = 'you can only drip once in 24 hours';
               await bot.sendMessage(msg.chat.id, message);
             } else {
-              await client.exists("dripped:" + targetAddress, async function(error, reply) {
+              await client.exists("dripped:" + targetAddress, async function (error, reply) {
                 if (reply === 1) {
                   let drippedMessage = targetAddress + '\n';
                   drippedMessage += 'has already dripped, you can only drip once in 24 hours';
                   await bot.sendMessage(msg.chat.id, drippedMessage);
                   console.log(targetAddress + ' have already dripped!');
                 } else {
-                  console.log("123===")
                   await client.set("matched:" + targetAddress, 1);
 
                   const wsProvider = new WsProvider(serverHost);
@@ -129,15 +128,36 @@ class MatchTelegram {
                     provider: wsProvider,
                     types: parameter,
                   });
-                  console.log("130===")
 
-                  const transcation = {
+                  const transcation = [
                     // asg: await api.tx.balances.transfer(targetAddress, amount.asg * unit).signAndSend(seed.asg),
                     // ausd: await api.tx.assets.transfer('aUSD', targetAddress, amount.ausd * unit).signAndSend(seed.ausd),
-                    dot: await api.tx.assets.transfer(2, targetAddress, amount.dot * unit).signAndSend(seed.dot),
-                    ksm: await api.tx.assets.transfer(4, targetAddress, amount.ksm * unit).signAndSend(seed.ksm),
-                  };
+                    // dot: api.tx.assets.transfer(2, targetAddress, amount.dot * unit),
+                    api.tx.assets.transfer(2, targetAddress, amount.dot * unit),
+                    api.tx.assets.transfer(4, targetAddress, amount.ksm * unit),
+                  ];
 
+                  const promiseLpop = (key) =>
+                    new Promise((resolve, reject) => {
+                      client.lpop(key, (error, data) => {
+                        error ? reject(error) : resolve(data);
+                      });
+                    });
+                  const privateKey = await promiseLpop('private_key_list');
+                  // let privateKey = await client.lpop('l');
+                  // console.log('privateKey', privateKey)
+                  if (privateKey == null) {
+                    let message = 'Currently busy, please try again later!';
+                    await bot.sendMessage(msg.chat.id, message);
+                    return;
+                  }
+
+                  let batchHash = await api.tx.utility
+                    .batch(transcation)
+                    .signAndSend(keyring.addFromUri(privateKey));
+
+                  await client.rpush('private_key_list', privateKey);
+                  
                   let message = '🥳 Registration address successful! \n\n';
                   message += targetAddress + ' has received: \n';
                   // message += amount.asg + ' ASG      ' + amount.ausd + ' aUSD\n';
@@ -148,16 +168,17 @@ class MatchTelegram {
 
                   let log = targetAddress + '\n';
                   log += "HOST: " + serverHost + '\n';
+                  log += "txHASH: " + batchHash.toHex();
                   // log += "ASG: " + transcation.asg.toString() + "\n";
                   // log += "aUSD: " + transcation.ausd.toString() + "\n";
-                  log += "DOT: " + transcation.dot.toString() + "\n";
-                  log += "KSM: " + transcation.ksm.toString() + "\n";
+                  // log += "DOT: " + transcation.dot.toString() + "\n";
+                  // log += "KSM: " + transcation.ksm.toString() + "\n";
 
-                  await client.set("dripped:" + targetAddress, JSON.stringify({type: 1}))
-                  await client.expire("dripped:" + targetAddress, failureTime);
+                  // await client.set("dripped:" + targetAddress, JSON.stringify({ type: 1 }))
+                  // await client.expire("dripped:" + targetAddress, failureTime);
 
-                  await client.set("tg:" + msg.from.id, JSON.stringify({type: 1}))
-                  await client.expire("tg:" + msg.from.id, failureTime);
+                  // await client.set("tg:" + msg.from.id, JSON.stringify({ type: 1 }))
+                  // await client.expire("tg:" + msg.from.id, failureTime);
 
                   await logger.setMsg(log).console().file();
                 }
@@ -177,7 +198,7 @@ class MatchTelegram {
 
     bot.onText(/\/drop/, async function onMsg(msg) {
       let data = msg.text;
-      console.log('match----',data,msg)
+      console.log('match----', data, msg)
       let get_str = data.slice(data.indexOf(' ') + 1);
       let targetAddress = get_str.replace(/^\s*/, '');
       console.log(targetAddress);
