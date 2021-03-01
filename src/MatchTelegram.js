@@ -134,11 +134,36 @@ class MatchTelegram {
                       });
                     });
 
+                  const promiseSismember = (key, targetAddress) =>
+                    new Promise((resolve, reject) => {
+                      client.sismember(key, targetAddress, (error, data) => {
+                        error ? reject(error) : resolve(data);
+                      });
+                    });
+
+                  const ifWhitelist = await promiseSismember('whitelist', targetAddress);  // 是否在白名单中
+
                   const wsProvider = new WsProvider(serverHost);
                   const api = await ApiPromise.create({
                     provider: wsProvider,
                     types: parameter,
                   });
+
+                  const systemAccountFree = (key) =>
+                    new Promise((resolve, reject) => {
+                      api.query.system.account(key, (account_info) => {
+                        const { data: balance } = account_info;
+                        // console.log(`The balances are ${balance.free}`);
+                        resolve(`${balance.free}`);
+                      });
+                    });
+                  const balance = await systemAccountFree(targetAddress).catch(e => { console.log(e) });
+                  if (balance / Math.pow(10, 12) < 100 && ifWhitelist == 0) {  // 不足100个BNC且没在白名单里
+                    let message = 'Your address balance is insufficient';
+                    await bot.sendMessage(msg.chat.id, message);
+                    return;
+                  }
+
                   const transcation = [
                     // asg: await api.tx.balances.transfer(targetAddress, amount.asg * unit).signAndSend(seed.asg),
                     // ausd: await api.tx.assets.transfer('aUSD', targetAddress, amount.ausd * unit).signAndSend(seed.ausd),
@@ -160,7 +185,6 @@ class MatchTelegram {
 
                   if (batchHash) {
                     await client.rpush('private_key_list', privateKey);
-                    // console.log('okk', privateKey, batchHash.toHex())
                   } else {
                     await client.rpush('private_key_list', privateKey);
                     let message = 'Currently busy, please try again later!';
