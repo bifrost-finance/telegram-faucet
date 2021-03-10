@@ -53,14 +53,18 @@ class MatchTelegram {
       },
     });
 
+    function sleep(time) {
+      return new Promise((resolve) => setTimeout(resolve, time));
+    }
+
     bot.onText(/\/drop/, async function onLoveText(msg) {
-      if (msg.chat.type !== 'supergroup') {
-        await bot.sendMessage(msg.chat.id, 'Bifrost faucet bot don\'t support private chat, please send command in Bifrost Faucet Group');
+      // if (msg.chat.type !== 'supergroup') {
+      //   await bot.sendMessage(msg.chat.id, 'Bifrost faucet bot don\'t support private chat, please send command in Bifrost Faucet Group');
 
-        console.log('Bifrost faucet bot don\'t support private chat, please send command in Bifrost Faucet Group');
+      //   console.log('Bifrost faucet bot don\'t support private chat, please send command in Bifrost Faucet Group');
 
-        return false;
-      }
+      //   return false;
+      // }
 
       let data = msg.text;
       let get_str = data.slice(data.indexOf(' ') + 1);
@@ -115,7 +119,7 @@ class MatchTelegram {
           await client.exists("tg:" + msg.from.id, async function (error, reply) {
             console.log(`tg:${msg.from.id} => reply: ${reply}`);
             if (reply === 1) {
-              let message = 'you can only drip once in 24 hours';
+              let message = '@' + msg.from.username + ' you can only drip once in 24 hours';
               await bot.sendMessage(msg.chat.id, message);
             } else {
               await client.exists("dripped:" + targetAddress, async function (error, reply) {
@@ -153,13 +157,13 @@ class MatchTelegram {
                     new Promise((resolve, reject) => {
                       api.query.system.account(key, (account_info) => {
                         const { data: balance } = account_info;
-                        // console.log(`The balances are ${balance.free}`);
+                        console.log(`The balances are ${balance.free}`);
                         resolve(`${balance.free}`);
                       });
                     });
                   const balance = await systemAccountFree(targetAddress).catch(e => { console.log(e) });
                   if (balance / Math.pow(10, 12) < 100 && ifWhitelist == 0) {  // 不足100个BNC且没在白名单里
-                    let message = 'Your address balance is insufficient';
+                    let message = '@' + msg.from.username + ' Sorry, your address balance is insufficient, only more than 100 BNC address can request test tokens.';
                     await bot.sendMessage(msg.chat.id, message);
                     return;
                   }
@@ -168,12 +172,12 @@ class MatchTelegram {
                     // asg: await api.tx.balances.transfer(targetAddress, amount.asg * unit).signAndSend(seed.asg),
                     // ausd: await api.tx.assets.transfer('aUSD', targetAddress, amount.ausd * unit).signAndSend(seed.ausd),
                     // dot: api.tx.assets.transfer(2, targetAddress, amount.dot * unit),
-                    api.tx.assets.transfer(config.asset.dot, targetAddress, amount.dot * unit),
-                    api.tx.assets.transfer(config.asset.eth, targetAddress, amount.eth * unit),
+                    api.tx.assets.transfer(targetAddress, { "Token": "DOT" }, amount.dot * unit),
+                    api.tx.assets.transfer(targetAddress, { "Token": "ETH" }, amount.eth * unit),
                   ];
                   const privateKey = await promiseLpop('private_key_list');
                   if (privateKey == null) {  // redis中私钥被取光
-                    let message = 'Currently busy, please try again later!';
+                    let message = '@' + msg.from.username + ' Currently busy, please try again later!';
                     await bot.sendMessage(msg.chat.id, message);
                     return;
                   }
@@ -186,19 +190,22 @@ class MatchTelegram {
                   if (batchHash) {
                     await client.rpush('private_key_list', privateKey);
                   } else {
-                    await client.rpush('private_key_list', privateKey);
-                    let message = 'Currently busy, please try again later!';
+                    let message = '@' + msg.from.username + ' Currently busy, please try again later!';
                     await bot.sendMessage(msg.chat.id, message);
+                    sleep(3000);  // 等三秒，视情况可作修改
+                    await client.lpush('private_key_list', privateKey);
                     return;
                   }
 
-                  let message = '🥳 Registration address successful! \n\n';
-                  message += targetAddress + ' has received: \n';
-                  // message += amount.asg + ' ASG      ' + amount.ausd + ' aUSD\n';
-                  message += amount.dot + ' DOT      ' + amount.eth + ' ETH\n\n';
-                  message += 'Explorer: https://bifrost.subscan.io\nUse them in https://dash.bifrost.finance for test (OWNS NO VALUE)';
+                  // let message = '🥳 Registration address successful! \n\n';
+                  // message += targetAddress + ' has received: \n';
+                  // message += amount.dot + ' DOT      ' + amount.eth + ' ETH\n\n';
+                  // message += 'Explorer: https://bifrost.subscan.io\nUse them in https://dash.bifrost.finance for test (OWNS NO VALUE)';
 
-                  await bot.sendMessage(msg.chat.id, message);
+                  let message = '@' + msg.from.username + ' Sent ' + targetAddress + ' {"DOT":200 "ETH":5}. \n'
+                  message += ' Extrinsic hash:  ' + batchHash.toHex() + '\n';
+                  message += 'View on [SubScan](https://bifrost.subscan.io/extrinsic/' + batchHash.toHex();
+                  await bot.sendMessage(msg.chat.id, message, { parse_mode: 'Markdown' });
 
                   let log = targetAddress + '\n';
                   log += "HOST: " + serverHost + '\n';
