@@ -73,11 +73,8 @@ class MatchTelegram {
       client.select('15');
 
       const hostResources = [
-        // 'wss://testnet.liebi.com/',
-        // 'wss://testnet.liebi.com/',
-        // 'wss://n3.testnet.liebi.com/'
-        'ws://118.126.112.5:9941/',
-        'ws://118.126.112.5:9941/'
+        config.server.host,
+        config.server.host
       ];
 
       let residue = new Date().getMinutes() % 2;
@@ -99,10 +96,11 @@ class MatchTelegram {
       const unit = 1000000000000;
 
       const amount = {
-        dot: 200,
-        eth: 5,
-        // ausd: 100,
-        // asg: 20,
+        dot: 100,
+        ksm: 20,
+        eth: 10,
+        ausd: 10000,
+        asg: 500,
       };
 
       let flag = true;
@@ -153,27 +151,27 @@ class MatchTelegram {
                     types: parameter,
                   });
 
-                  const systemAccountFree = (key) =>
-                    new Promise((resolve, reject) => {
-                      api.query.system.account(key, (account_info) => {
-                        const { data: balance } = account_info;
-                        console.log(`The balances are ${balance.free}`);
-                        resolve(`${balance.free}`);
-                      });
-                    });
-                  const balance = await systemAccountFree(targetAddress).catch(e => { console.log(e) });
-                  if (balance / Math.pow(10, 12) < 100 && ifWhitelist == 0) {  // 不足100个BNC且没在白名单里
-                    let message = '@' + msg.from.username + ' Sorry, your address balance is insufficient, only more than 100 BNC address can request test tokens.';
-                    await bot.sendMessage(msg.chat.id, message);
-                    return;
-                  }
+                  // const systemAccountFree = (key) =>
+                  //   new Promise((resolve, reject) => {
+                  //     api.query.system.account(key, (account_info) => {
+                  //       const { data: balance } = account_info;
+                  //       // console.log(`The balances are ${balance.free}`);
+                  //       resolve(`${balance.free}`);
+                  //     });
+                  //   });
+                  // const balance = await systemAccountFree(targetAddress).catch(e => { console.log(e) });
+                  // if (balance / Math.pow(10, 12) < 100 && ifWhitelist == 0) {  // 不足100个BNC且没在白名单里
+                  //   let message = '@' + msg.from.username + ' Sorry, your address balance is insufficient, only more than 100 BNC address can request test tokens.';
+                  //   await bot.sendMessage(msg.chat.id, message);
+                  //   return;
+                  // }
 
                   const transcation = [
-                    // asg: await api.tx.balances.transfer(targetAddress, amount.asg * unit).signAndSend(seed.asg),
-                    // ausd: await api.tx.assets.transfer('aUSD', targetAddress, amount.ausd * unit).signAndSend(seed.ausd),
-                    // dot: api.tx.assets.transfer(2, targetAddress, amount.dot * unit),
-                    api.tx.assets.transfer(targetAddress, { "Token": "DOT" }, amount.dot * unit),
-                    api.tx.assets.transfer(targetAddress, { "Token": "ETH" }, amount.eth * unit),
+                    api.tx.currencies.transfer(targetAddress, { "Token": "DOT" }, amount.dot * unit),
+                    api.tx.currencies.transfer(targetAddress, { "Token": "KSM" }, amount.ksm * unit),
+                    api.tx.currencies.transfer(targetAddress, { "Token": "ETH" }, amount.eth * unit),
+                    api.tx.currencies.transfer(targetAddress, { "Token": "aUSD" }, (amount.ausd * unit).toString()),
+                    api.tx.currencies.transfer(targetAddress, { "Token": "ASG" }, amount.asg * unit),
                   ];
                   const privateKey = await promiseLpop('private_key_list');
                   if (privateKey == null) {  // redis中私钥被取光
@@ -182,7 +180,7 @@ class MatchTelegram {
                     return;
                   }
 
-                  let batchHash = await api.tx.utility
+                  const batchHash = await api.tx.utility
                     .batch(transcation)
                     .signAndSend(keyring.addFromUri(privateKey))
                     .catch(async function (reason) { });
@@ -202,7 +200,7 @@ class MatchTelegram {
                   // message += amount.dot + ' DOT      ' + amount.eth + ' ETH\n\n';
                   // message += 'Explorer: https://bifrost.subscan.io\nUse them in https://dash.bifrost.finance for test (OWNS NO VALUE)';
 
-                  let message = '@' + msg.from.username + ' Sent ' + targetAddress + ' {"DOT":200 "ETH":5}. \n'
+                  let message = '@' + msg.from.username + ' Sent ' + targetAddress + ' {"DOT":100, "KSM":20, "ETH":10, "aUSD":10000, "ASG":500}. \n'
                   message += ' Extrinsic hash:  ' + batchHash.toHex() + '\n';
                   message += 'View on [SubScan](https://bifrost.subscan.io/extrinsic/' + batchHash.toHex();
                   await bot.sendMessage(msg.chat.id, message, { parse_mode: 'Markdown' });
