@@ -57,7 +57,7 @@ class MatchTelegram {
       return new Promise((resolve) => setTimeout(resolve, time));
     }
 
-    bot.onText(/\/drop/, async function onLoveText(msg) {
+    bot.onText(/\/drip/, async function onLoveText(msg) {
       // if (msg.chat.type !== 'supergroup') {
       //   await bot.sendMessage(msg.chat.id, 'Bifrost faucet bot don\'t support private chat, please send command in Bifrost Faucet Group');
 
