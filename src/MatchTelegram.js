@@ -42,16 +42,23 @@ class MatchTelegram {
 
     const token = config.telegram.key;
 
-    const bot = new TelegramBot(token, {
-      polling: true,
-      request: {
-        agentClass: Agent,
-        agentOptions: {
-          socksHost: config.network.proxy.host,
-          socksPort: config.network.proxy.port,
+    let bot;
+    if (config.network.mode==='proxy') {
+      bot = new TelegramBot(token, {
+        polling: true,
+        request: {
+          agentClass: Agent,
+          agentOptions: {
+            socksHost: config.network.proxy.host,
+            socksPort: config.network.proxy.port,
+          },
         },
-      },
-    });
+      });
+    } else {
+      bot = new TelegramBot(token, {
+        polling: true,
+      });
+    }
 
     function sleep(time) {
       return new Promise((resolve) => setTimeout(resolve, time));
@@ -86,13 +93,6 @@ class MatchTelegram {
 
       await cryptoWaitReady();
 
-      // const seed = {
-      //   dot: keyring.addFromUri(config.root_seed.seed_dot),
-      //   ksm: keyring.addFromUri(config.root_seed.seed_ksm),
-      //   ausd: keyring.addFromUri(config.root_seed.seed_ausd),
-      //   asg: keyring.addFromUri(config.root_seed.seed_asg),
-      // };
-
       const unit = 1000000000000;
 
       const amount = {
@@ -117,7 +117,7 @@ class MatchTelegram {
           await client.exists("tg:" + msg.from.id, async function (error, reply) {
             console.log(`tg:${msg.from.id} => reply: ${reply}`);
             if (reply === 1) {
-              let message = '@' + msg.from.username + ' you can only drip once in 24 hours';
+              let message = '@' + msg.from.username + ' has already dripped, you can only drip once in 24 hours';
               await bot.sendMessage(msg.chat.id, message);
             } else {
               await client.exists("dripped:" + targetAddress, async function (error, reply) {
@@ -200,7 +200,11 @@ class MatchTelegram {
                   // message += amount.dot + ' DOT      ' + amount.eth + ' ETH\n\n';
                   // message += 'Explorer: https://bifrost.subscan.io\nUse them in https://dash.bifrost.finance for test (OWNS NO VALUE)';
 
-                  let message = '@' + msg.from.username + ' Sent ' + targetAddress + ' {"DOT":100, "KSM":20, "ETH":10, "aUSD":10000, "ASG":500}. \n'
+                  // let message = '@' + msg.from.username + ' Sent ' + targetAddress + ' {"DOT":100, "KSM":20, "ETH":10, "aUSD":10000, "ASG":500}. \n'
+                  let message = targetAddress + 'has received test token (OWNS NO VALUE): \n'
+                  message += '100 DOT     20 KSM\n'
+                  message += '10 ETH     10,000 aUSD\n'
+                  message += '500 ASG\n'
                   message += ' Extrinsic hash:  ' + batchHash.toHex() + '\n';
                   message += 'View on [SubScan](https://bifrost.subscan.io/extrinsic/' + batchHash.toHex();
                   await bot.sendMessage(msg.chat.id, message, { parse_mode: 'Markdown' });
