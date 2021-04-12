@@ -235,7 +235,7 @@ class MatchTelegram {
         }
       }
       else {
-        await bot.sendMessage(msg.chat.id, 'You can send /want + BIFROST_ADDRESS to get some token in Bifrost for test (OWNS NO VALUE)');
+        await bot.sendMessage(msg.chat.id, 'You can send /drip + BIFROST_ADDRESS to get some token in Bifrost for test (OWNS NO VALUE)');
       }
     });
   }
