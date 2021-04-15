@@ -79,13 +79,13 @@ class MatchTelegram {
       console.log(targetAddress);
       client.select('15');
 
-      const hostResources = [
-        config.server.host,
-        config.server.host
-      ];
+      // const hostResources = [
+      //   config.server.host,
+      //   config.server.host
+      // ];
 
-      let residue = new Date().getMinutes() % 2;
-      let serverHost = hostResources[residue];
+      // let residue = new Date().getMinutes() % 2;
+      let serverHost = config.server.host // hostResources[residue];
 
       const keyring = new Keyring({
         type: 'sr25519',
@@ -136,14 +136,14 @@ class MatchTelegram {
                       });
                     });
 
-                  const promiseSismember = (key, targetAddress) =>
-                    new Promise((resolve, reject) => {
-                      client.sismember(key, targetAddress, (error, data) => {
-                        error ? reject(error) : resolve(data);
-                      });
-                    });
+                  // const promiseSismember = (key, targetAddress) =>
+                  //   new Promise((resolve, reject) => {
+                  //     client.sismember(key, targetAddress, (error, data) => {
+                  //       error ? reject(error) : resolve(data);
+                  //     });
+                  //   });
 
-                  const ifWhitelist = await promiseSismember('whitelist', targetAddress);  // 是否在白名单中
+                  // const ifWhitelist = await promiseSismember('whitelist', targetAddress);  // 是否在白名单中
 
                   const wsProvider = new WsProvider(serverHost);
                   const api = await ApiPromise.create({
@@ -201,12 +201,11 @@ class MatchTelegram {
                   // message += 'Explorer: https://bifrost.subscan.io\nUse them in https://dash.bifrost.finance for test (OWNS NO VALUE)';
 
                   // let message = '@' + msg.from.username + ' Sent ' + targetAddress + ' {"DOT":100, "KSM":20, "ETH":10, "aUSD":10000, "ASG":500}. \n'
-                  let message = targetAddress + 'has received test token (OWNS NO VALUE): \n'
-                  message += '100 DOT     20 KSM\n'
-                  message += '10 ETH     10,000 aUSD\n'
-                  message += '500 ASG\n'
-                  message += ' Extrinsic hash:  ' + batchHash.toHex() + '\n';
-                  message += 'View on [SubScan](https://bifrost.subscan.io/extrinsic/' + batchHash.toHex();
+                  let message = targetAddress + ' has received:\n'
+                  message += '100 DOT / 20 KSM / 10 ETH / 10,000 aUSD / 500 ASG\n'
+                  message += 'Extrinsic hash:  ' + batchHash.toHex() + '\n';
+                  message += 'Token for test, OWNS NO VALUE\n'
+                  // message += 'View on [SubScan](https://bifrost.subscan.io/extrinsic/' + batchHash.toHex();
                   await bot.sendMessage(msg.chat.id, message, { parse_mode: 'Markdown' });
 
                   let log = targetAddress + '\n';
