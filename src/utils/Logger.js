@@ -1,9 +1,8 @@
-import Telegram from '../Telegram'
 import {getLogger, configure} from 'log4js'
 
 configure({
     appenders: {
-        everything: {type: 'file', filename: 'liebi-telegram-faucet'}
+        everything: {type: 'file', filename: 'liebi-telegram-faucet.log'}
     },
     categories: {
         default: {appenders: ['everything'], level: 'all'}
@@ -12,9 +11,7 @@ configure({
 const logger = getLogger()
 
 export default class Logger {
-    constructor() {
-        this.tg = new Telegram()
-    }
+    constructor() {}
 
     setMsg(message) {
         this.message = `${message}`
@@ -28,13 +25,6 @@ export default class Logger {
 
     file() {
         logger.info(this.message)
-        return this
-    }
-
-    async telegram(enable = true) {
-        if (enable) {
-            await this.tg.sendGroupMessage(this.message)
-        }
         return this
     }
 }
