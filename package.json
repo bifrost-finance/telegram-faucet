@@ -15,12 +15,9 @@
     "bn": "^1.0.5",
     "csv-parse": "^4.8.8",
     "dotenv": "^14.3.0",
-    "enum": "^3.0.4",
     "log4js": "^6.4.1",
     "node-cache": "^5.1.2",
-    "node-telegram-bot-api": "^0.56.0",
-    "regenerator-runtime": "^0.13.9",
-    "request": "^2.88.2"
+    "node-telegram-bot-api": "^0.56.0"
   },
   "devDependencies": {
     "@babel/core": "^7.16.12",
