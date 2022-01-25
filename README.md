@@ -3,9 +3,17 @@
 
 ## 部署与运行
 运行前先配置 .env 文件
+
+1. 本地运行
 ```
 yarn install
 yarn start
+```
+
+2. 线上运行
+```
+yarn install
+yarn prod
 ```
 
 ## 命令
