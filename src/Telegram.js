@@ -7,7 +7,7 @@ import { ApiPromise, WsProvider, Keyring } from '@polkadot/api';
 import { hexToU8a, isHex } from '@polkadot/util';
 import { cryptoWaitReady } from '@polkadot/util-crypto';
 
-class MatchTelegram {
+class Telegram {
   static async start () {
     const logger = new Logger();
     await (await logger.setMsg(
@@ -100,4 +100,4 @@ class MatchTelegram {
   }
 }
 
-export default MatchTelegram;
+export default Telegram;

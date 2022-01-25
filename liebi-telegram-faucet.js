@@ -1,6 +1,6 @@
-import MatchTelegram from './src/MatchTelegram';
+import Telegram from './src/Telegram';
 import 'dotenv/config';
 
 (async () => {
-  await MatchTelegram.start()
+  await Telegram.start()
 })()
