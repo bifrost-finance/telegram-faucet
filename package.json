@@ -2,9 +2,9 @@
   "name": "liebi-telegram-faucet",
   "version": "0.1.0",
   "private": true,
-  "main": "liebi-telegram-faucet.js",
+  "main": "index.js",
   "scripts": {
-    "start": "babel-node liebi-telegram-faucet.js"
+    "start": "babel-node index.js"
   },
   "dependencies": {
     "@bifrost-finance/api": "^1.3.20",
