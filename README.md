@@ -7,3 +7,11 @@
 yarn install
 yarn start
 ```
+
+## 命令
+```
+The following commands are supported:
+!balance - Get the faucet's balance.
+!drip <Address> - Send BNC to <Address>.
+!help - Print this message
+```
