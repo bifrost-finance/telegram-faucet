@@ -142,7 +142,7 @@ class Telegram {
 
       const account = await db.any('SELECT sum(balance) from parachain_staking_rewardeds where account = $1',targetAddress);
       const account_bnc = new BigNumber(account[0].sum).dividedBy(sum).multipliedBy(bnc_reward).toFixed(2);
-      let message = `${targetAddress} has bnc reward: ${account_bnc} BNC.\n`;
+      let message = `${targetAddress} has bnc reward: ${account_bnc || 0} BNC.\n`;
       await bot.sendMessage(msg.chat.id, message);
     });
 
