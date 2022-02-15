@@ -131,7 +131,7 @@ class Telegram {
       }
     });
 
-    bot.onText(/^!rank/, async function onLoveText (msg,match) {
+    bot.onText(/^!rank/, async function onLoveText (msg) {
       const sums = await db.any('SELECT sum(balance) from parachain_staking_rewardeds');
       const sum = new BigNumber(sums[0].sum);
       const bnc_reward = new BigNumber(20000);
@@ -139,6 +139,15 @@ class Telegram {
       let data = msg.text;
       const get_str = data.slice(data.indexOf(' ') + 1);
       const targetAddress = get_str.replace(/^\s*/, '');
+      // validate address
+      try {
+        keyring.encodeAddress(isHex(targetAddress)
+          ? hexToU8a(targetAddress)
+          : keyring.decodeAddress(targetAddress));
+      } catch (error) {
+        await bot.sendMessage(msg.from.id, Telegram.helpMessage(), {parse_mode: 'Markdown'});
+        return;
+      }
 
       const account = await db.any('SELECT sum(balance) from parachain_staking_rewardeds where account = $1',targetAddress);
       const account_bnc = new BigNumber(account[0].sum).dividedBy(sum).multipliedBy(bnc_reward).toFixed(2);
@@ -146,7 +155,7 @@ class Telegram {
       await bot.sendMessage(msg.chat.id, message);
     });
 
-    bot.onText(/^!top$/, async function onLoveText (msg,match) {
+    bot.onText(/^!top$/, async function onLoveText (msg) {
       const sums = await db.any('SELECT sum(balance) from parachain_staking_rewardeds');
       const sum = new BigNumber(sums[0].sum);
       const bnc_reward = new BigNumber(20000);
