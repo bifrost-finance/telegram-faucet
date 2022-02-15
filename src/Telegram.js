@@ -90,13 +90,13 @@ class Telegram {
       const CacheAddress = `dripped:${targetAddress}`;
       try {
         if (cacheClient.has(CacheId)) {
-          const message = `@${msg.from.username} has already dripped, you can only drip once in 24 hours`;
+          const message = `@${msg.from.username} has already dripped, you can only drip once in 12 hours`;
           await bot.sendMessage(msg.chat.id, message);
           return;
         }
 
         if (cacheClient.has(CacheAddress)) {
-          const drippedMessage = `${targetAddress}\nhas already dripped, you can only drip once in 24 hours`;
+          const drippedMessage = `${targetAddress}\nhas already dripped, you can only drip once in 12 hours`;
           await bot.sendMessage(msg.chat.id, drippedMessage);
           return;
         }
