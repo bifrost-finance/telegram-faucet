@@ -15,8 +15,8 @@ class Telegram {
     return `The following commands are supported:
 *!balance* - _Get the faucet's balance_.
 *!drip <Address>* - _Send ${process.env.FAUCET_AMOUNT} BNCs to <Address>_.
-*!top* _Top list_.
-*!rank <Address>* - _Get rank of the address_.
+*!top* _Query the top 30 who get the most rewards through the delegate of the collator test network_.
+*!rank <Address>* - _Query the test BNC reward obtained by the corresponding address_.
 *!help* - _Print this message_`;
   }
 
@@ -137,10 +137,12 @@ class Telegram {
       const bnc_reward = new BigNumber(20000);
 
       let data = msg.text;
-      const get_addr = data.slice(data.indexOf(' ') + 1);
-      const account = await db.any('SELECT sum(balance) from parachain_staking_rewardeds where account = $1',get_addr);
+      const get_str = data.slice(data.indexOf(' ') + 1);
+      const targetAddress = get_str.replace(/^\s*/, '');
+
+      const account = await db.any('SELECT sum(balance) from parachain_staking_rewardeds where account = $1',targetAddress);
       const account_bnc = new BigNumber(account[0].sum).dividedBy(sum).multipliedBy(bnc_reward).toFixed(2);
-      let message = `${get_addr} has bnc reward: ${account_bnc} BNC.\n`;
+      let message = `${targetAddress} has bnc reward: ${account_bnc} BNC.\n`;
       await bot.sendMessage(msg.chat.id, message);
     });
 
