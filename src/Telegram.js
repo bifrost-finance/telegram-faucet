@@ -15,6 +15,8 @@ class Telegram {
     return `The following commands are supported:
 *!balance* - _Get the faucet's balance_.
 *!drip <Address>* - _Send ${process.env.FAUCET_AMOUNT} BNCs to <Address>_.
+*!top* _Top list_.
+*!rank <Address>* - _Get rank of the address_.
 *!help* - _Print this message_`;
   }
 
@@ -129,7 +131,7 @@ class Telegram {
       }
     });
 
-    bot.onText(/^\/rank/, async function onLoveText (msg,match) {
+    bot.onText(/^!rank/, async function onLoveText (msg,match) {
       const sums = await db.any('SELECT sum(balance) from parachain_staking_rewardeds');
       const sum = new BigNumber(sums[0].sum);
       const bnc_reward = new BigNumber(20000);
@@ -142,12 +144,12 @@ class Telegram {
       await bot.sendMessage(msg.chat.id, message);
     });
 
-    bot.onText(/^\/top/, async function onLoveText (msg,match) {
+    bot.onText(/^!top$/, async function onLoveText (msg,match) {
       const sums = await db.any('SELECT sum(balance) from parachain_staking_rewardeds');
       const sum = new BigNumber(sums[0].sum);
       const bnc_reward = new BigNumber(20000);
 
-      let message = 
+      let message =
       `<pre>| account | bnc | percentage |\n| ------- | --- | ---------- |\n`;
       let results = await db.any('SELECT account,sum(balance) as bnc from parachain_staking_rewardeds GROUP by account ORDER BY bnc DESC LIMIT 30');
       results.forEach(value =>{
