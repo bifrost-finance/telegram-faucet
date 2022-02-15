@@ -6,6 +6,8 @@ import { options } from '@bifrost-finance/api';
 import { ApiPromise, WsProvider, Keyring } from '@polkadot/api';
 import { hexToU8a, isHex } from '@polkadot/util';
 import { cryptoWaitReady } from '@polkadot/util-crypto';
+import pgPromise from 'pg-promise' ;
+import BigNumber from 'bignumber.js';
 
 class Telegram {
 
@@ -19,6 +21,15 @@ class Telegram {
   static async start () {
     const logger = new Logger();
     await (await logger.setMsg(`[Started] liebi-telegram-faucet`).console().file());
+
+    const pgp = pgPromise();
+    const db = pgp({
+      host: process.env.DB_HOST,
+      port: process.env.DB_PORT,
+      database: process.env.DB_DATABASE,
+      user: process.env.DB_USER,
+      password: process.env.DB_PASSWORD,
+    });
 
     const CacheTTL = process.env.CACHE_TTL;
     const cacheClient = new NodeCache();
@@ -116,6 +127,38 @@ class Telegram {
         let message = `@${msg.from.username} Currently busy, please try again later!`;
         await bot.sendMessage(msg.chat.id, message);
       }
+    });
+
+    bot.onText(/^\/rank/, async function onLoveText (msg,match) {
+      const sums = await db.any('SELECT sum(balance) from parachain_staking_rewardeds');
+      const sum = new BigNumber(sums[0].sum);
+      const bnc_reward = new BigNumber(20000);
+
+      let data = msg.text;
+      const get_addr = data.slice(data.indexOf(' ') + 1);
+      const account = await db.any('SELECT sum(balance) from parachain_staking_rewardeds where account = $1',get_addr);
+      const account_bnc = new BigNumber(account[0].sum).dividedBy(sum).multipliedBy(bnc_reward).toFixed(2);
+      let message = `${get_addr} has bnc reward: ${account_bnc} BNC.\n`;
+      await bot.sendMessage(msg.chat.id, message);
+    });
+
+    bot.onText(/^\/top/, async function onLoveText (msg,match) {
+      const sums = await db.any('SELECT sum(balance) from parachain_staking_rewardeds');
+      const sum = new BigNumber(sums[0].sum);
+      const bnc_reward = new BigNumber(20000);
+
+      let message = 
+      `<pre>| account | bnc | percentage |\n| ------- | --- | ---------- |\n`;
+      let results = await db.any('SELECT account,sum(balance) as bnc from parachain_staking_rewardeds GROUP by account ORDER BY bnc DESC LIMIT 30');
+      results.forEach(value =>{
+        let percentage = BigNumber(value.bnc).multipliedBy(100).dividedBy(sum).toFixed(2);
+        value.percentage = percentage + '%';
+        value.bnc=bnc_reward.multipliedBy(value.bnc).dividedBy(sum).toFixed(2);
+        message = message + `| ${value.account}  | ${value.bnc} | ${value.percentage} |\n`
+      })
+
+      message = message+`</pre>`;
+      await bot.sendMessage(msg.chat.id, message, {parse_mode: 'HTML'});
     });
   }
 }
