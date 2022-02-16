@@ -56,13 +56,13 @@ class Telegram {
     ));
 
     bot.onText(/^!help$/, async function onLoveText (msg) {
-      await bot.sendMessage(msg.from.id, Telegram.helpMessage(), {parse_mode: 'Markdown'});
+      await bot.sendMessage(msg.chat.id, Telegram.helpMessage(), {parse_mode: 'Markdown'});
     });
 
     bot.onText(/^!balance$/, async function onLoveText (msg) {
       const { nonce, data: balance } = await api.query.system.account(sender.address);
       let message = `The faucet has ${balance.free / unit} BNCs remaining.`;
-      await bot.sendMessage(msg.from.id, message, {parse_mode: 'Markdown'});
+      await bot.sendMessage(msg.chat.id, message, {parse_mode: 'Markdown'});
     });
 
     bot.onText(/^!drip/, async function onLoveText (msg) {
@@ -82,11 +82,11 @@ class Telegram {
           ? hexToU8a(targetAddress)
           : keyring.decodeAddress(targetAddress));
       } catch (error) {
-        await bot.sendMessage(msg.from.id, Telegram.helpMessage(), {parse_mode: 'Markdown'});
+        await bot.sendMessage(msg.chat.id, Telegram.helpMessage(), {parse_mode: 'Markdown'});
         return;
       }
 
-      const CacheId = `tg:${msg.from.id}`;
+      const CacheId = `tg:${msg.chat.id}`;
       const CacheAddress = `dripped:${targetAddress}`;
       try {
         if (cacheClient.has(CacheId)) {
@@ -145,7 +145,7 @@ class Telegram {
           ? hexToU8a(targetAddress)
           : keyring.decodeAddress(targetAddress));
       } catch (error) {
-        await bot.sendMessage(msg.from.id, Telegram.helpMessage(), {parse_mode: 'Markdown'});
+        await bot.sendMessage(msg.chat.id, Telegram.helpMessage(), {parse_mode: 'Markdown'});
         return;
       }
 
