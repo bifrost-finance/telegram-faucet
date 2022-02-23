@@ -86,7 +86,7 @@ class Telegram {
         return;
       }
 
-      const CacheId = `tg:${msg.chat.id}`;
+      const CacheId = `tg:${msg.from.id}`;
       const CacheAddress = `dripped:${targetAddress}`;
       try {
         if (cacheClient.has(CacheId)) {
