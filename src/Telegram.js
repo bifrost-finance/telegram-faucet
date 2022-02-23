@@ -104,7 +104,7 @@ class Telegram {
         // make transactions
         const transactions = [
           // api.tx.currencies.transfer(targetAddress, { "Token": "DOT" }, amount.dot * unit),
-          api.tx.currencies.transferNativeCurrency(targetAddress, (new BigNumber(amount.bnc)).multipliedBy(unit)),
+          api.tx.currencies.transferNativeCurrency(targetAddress, (new BigNumber(amount.bnc)).multipliedBy(unit).toString()),
         ];
         let tx;
         if (transactions.length > 1) {
