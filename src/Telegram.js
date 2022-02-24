@@ -12,11 +12,11 @@ import BigNumber from 'bignumber.js';
 class Telegram {
 
   static helpMessage () {
-    return `The following commands are supported:
+    return `\u{1F4DC} The following commands are supported:
 *!balance* - _Get the faucet's balance_.
-*!drip <Address>* - _Send ${process.env.FAUCET_AMOUNT} BNCs to <Address>_.
-*!top* _Query the top 30 who get the most rewards through the delegate of the collator test network_.
-*!rank <Address>* - _Query the test BNC reward obtained by the corresponding address_.
+*!drip <Address>* - _Send ${process.env.FAUCET_AMOUNT} BNC to <Address>_.
+*!top* - _Top 30 with the most delegate or collator rewards_.
+*!rank <Address>* - _Rank and rewards obtained by <Address>_.
 *!help* - _Print this message_`;
   }
 
@@ -61,7 +61,7 @@ class Telegram {
 
     bot.onText(/^!balance$/, async function onLoveText (msg) {
       const { nonce, data: balance } = await api.query.system.account(sender.address);
-      let message = `The faucet has ${balance.free / unit} BNCs remaining.`;
+      let message = `\u{1F6B0} The faucet has ${balance.free / unit} BNC (testnet) remaining.`;
       await bot.sendMessage(msg.chat.id, message, {parse_mode: 'Markdown'});
     });
 
@@ -90,13 +90,13 @@ class Telegram {
       const CacheAddress = `dripped:${targetAddress}`;
       try {
         if (cacheClient.has(CacheId)) {
-          const message = `@${msg.from.username} has already dripped, you can only drip once in 12 hours`;
+          const message = `\u{1F6B7} @${msg.from.username} has already dripped, you can only drip once in 12 hours.`;
           await bot.sendMessage(msg.chat.id, message);
           return;
         }
 
         if (cacheClient.has(CacheAddress)) {
-          const drippedMessage = `${targetAddress}\nhas already dripped, you can only drip once in 12 hours`;
+          const drippedMessage = `\u{1F6B7} ${targetAddress} has already dripped, you can only drip once in 12 hours.`;
           await bot.sendMessage(msg.chat.id, drippedMessage);
           return;
         }
@@ -114,9 +114,9 @@ class Telegram {
         }
         const txHash = await tx.signAndSend(sender);
 
-        let message = `@${msg.from.username} Sent ${amount.bnc} BNCs\n`;
+        let message = `\u{1F3AF} @${msg.from.username} sent ${amount.bnc} BNC, only for testing, owns no value.\n`;
         // message += `Extrinsic hash: ${txHash.toHex()}\n`;
-        message += `*ONLY FOR TESTING, OWNS NO VALUE*\n`;
+        // message += `*ONLY FOR TESTING, OWNS NO VALUE*\n`;
         // message += `View on [SubScan](https://bifrost.subscan.io/extrinsic/ ${txHash.toHex()}`;
         await bot.sendMessage(msg.chat.id, message, {parse_mode: 'Markdown'});
 
@@ -152,7 +152,8 @@ class Telegram {
       const account = await db.any('select * from (SELECT account,sum(balance),rank() over(order by SUM(balance) desc) from parachain_staking_rewardeds GROUP by account) t where t.account= $1',targetAddress);
       let account_bnc = new BigNumber(account[0].sum).dividedBy(sum).multipliedBy(bnc_reward);
       account_bnc = account_bnc.isNaN() ? 0:account_bnc.toFixed(2);
-      let message = `${targetAddress}:\nBNC reward: ${account_bnc} BNC\nCurrent ranking: ${account[0].rank}`;
+      let message = `\u{1F3AF} Ranking: ${account[0].rank}\n\u{1F505} Rewards (est.): ${account_bnc} BNC\n\u{1F334} Address: ${targetAddress}`
+      // let message = `${targetAddress}:\nBNC reward: ${account_bnc} BNC\nCurrent ranking: ${account[0].rank}`;
       await bot.sendMessage(msg.chat.id, message);
     });
 
@@ -162,13 +163,13 @@ class Telegram {
       const bnc_reward = new BigNumber(20000);
 
       let message =
-      `<pre>| account | bnc | percentage |\n| ------- | --- | ---------- |\n`;
+      `<pre>\u{1F6B1} Top 30 List\n`;
       let results = await db.any('SELECT account,sum(balance) as bnc from parachain_staking_rewardeds GROUP by account ORDER BY bnc DESC LIMIT 30');
       results.forEach(value =>{
         let percentage = BigNumber(value.bnc).multipliedBy(100).dividedBy(sum).toFixed(2);
         value.percentage = percentage + '%';
         value.bnc=bnc_reward.multipliedBy(value.bnc).dividedBy(sum).toFixed(2);
-        message = message + `| ${value.account}  | ${value.bnc} | ${value.percentage} |\n`
+        message = message + `${value.account} / ${value.percentage} / ${value.bnc} BNC\n`
       })
 
       message = message+`</pre>`;
