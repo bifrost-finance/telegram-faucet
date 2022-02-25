@@ -149,7 +149,7 @@ class Telegram {
         return;
       }
 
-      const account = await db.any('select * from (SELECT account,sum(balance),rank() over(order by SUM(balance) desc) from parachain_staking_rewardeds GROUP by account) t where t.account= $1',targetAddress);
+      const account = await db.any("select * from (SELECT account,sum(balance),rank() over(order by SUM(balance) desc) from parachain_staking_rewardeds where account NOT IN ('c9eHvgbxTFzijvY3AnAKiRTHhi2hzS5SLCPzCkb4jP79MLu', 'fFjUFbokagaDRQUDzVhDcMZQaDwQvvha74RMZnyoSWNpiBQ', 'fBAbVJAsbWsKTedTVYGrBB3Usm6Vx635z1N9PX2tZ2boT37', 'e2s2dTSWe9kHebF2FCbPGbXftDT7fY5AMDfib3j86zSi3v7') GROUP by account) t where t.account= $1",targetAddress);
       let account_bnc = new BigNumber(account[0].sum).dividedBy(sum).multipliedBy(bnc_reward);
       account_bnc = account_bnc.isNaN() ? 0:account_bnc.toFixed(2);
       let message = `\u{1F3AF} Ranking: ${account[0].rank}\n\u{1F505} Rewards (est.): ${account_bnc} BNC\n\u{1F334} Address: ${targetAddress}`
@@ -159,18 +159,13 @@ class Telegram {
 
     bot.onText(/^!top$/, async function onLoveText (msg) {
       const sums = await db.any("SELECT sum(balance) from parachain_staking_rewardeds where account NOT IN ('c9eHvgbxTFzijvY3AnAKiRTHhi2hzS5SLCPzCkb4jP79MLu', 'fFjUFbokagaDRQUDzVhDcMZQaDwQvvha74RMZnyoSWNpiBQ', 'fBAbVJAsbWsKTedTVYGrBB3Usm6Vx635z1N9PX2tZ2boT37', 'e2s2dTSWe9kHebF2FCbPGbXftDT7fY5AMDfib3j86zSi3v7')");
-      console.log(sums[0])
       const sum = new BigNumber(sums[0].sum);
       const bnc_reward = new BigNumber(20000);
 
-      // const seed_node=["c9eHvgbxTFzijvY3AnAKiRTHhi2hzS5SLCPzCkb4jP79MLu","fFjUFbokagaDRQUDzVhDcMZQaDwQvvha74RMZnyoSWNpiBQ","e2s2dTSWe9kHebF2FCbPGbXftDT7fY5AMDfib3j86zSi3v7zzzz"]
       let message =
-      `<pre>\u{1F6B1} Top 30 List\n`;
+      `<pre>\u{1F505} Top 30 List\n`;
       let results = await db.any("SELECT account,sum(balance) as bnc from parachain_staking_rewardeds where account NOT IN ('c9eHvgbxTFzijvY3AnAKiRTHhi2hzS5SLCPzCkb4jP79MLu', 'fFjUFbokagaDRQUDzVhDcMZQaDwQvvha74RMZnyoSWNpiBQ', 'fBAbVJAsbWsKTedTVYGrBB3Usm6Vx635z1N9PX2tZ2boT37', 'e2s2dTSWe9kHebF2FCbPGbXftDT7fY5AMDfib3j86zSi3v7') GROUP by account ORDER BY bnc DESC LIMIT 30");
       results.forEach(value =>{
-        const seed_node = ["c9eHvgbxTFzijvY3AnAKiRTHhi2hzS5SLCPzCkb4jP79MLu", "fFjUFbokagaDRQUDzVhDcMZQaDwQvvha74RMZnyoSWNpiBQ", "e2s2dTSWe9kHebF2FCbPGbXftDT7fY5AMDfib3j86zSi3v7", "fBAbVJAsbWsKTedTVYGrBB3Usm6Vx635z1N9PX2tZ2boT37"]
-
-        if (seed_node.includes(value.account)){return}
         let percentage = BigNumber(value.bnc).multipliedBy(100).dividedBy(sum).toFixed(2);
         value.percentage = percentage + '%';
         value.bnc=bnc_reward.multipliedBy(value.bnc).dividedBy(sum).toFixed(2);
