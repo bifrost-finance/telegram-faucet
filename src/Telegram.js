@@ -88,19 +88,22 @@ class Telegram {
 
       const CacheId = `tg:${msg.from.id}`;
       const CacheAddress = `dripped:${targetAddress}`;
+      if (cacheClient.has(CacheId)) {
+        const message = `\u{1F6B7} @${msg.from.username} has already dripped, you can only drip once in 12 hours.`;
+        await bot.sendMessage(msg.chat.id, message);
+        return;
+      }
+
+      if (cacheClient.has(CacheAddress)) {
+        const drippedMessage = `\u{1F6B7} ${targetAddress} has already dripped, you can only drip once in 12 hours.`;
+        await bot.sendMessage(msg.chat.id, drippedMessage);
+        return;
+      }
+
+      cacheClient.set(CacheId, 'true', CacheTTL);
+      cacheClient.set(CacheAddress, 'true', CacheTTL);
+
       try {
-        if (cacheClient.has(CacheId)) {
-          const message = `\u{1F6B7} @${msg.from.username} has already dripped, you can only drip once in 12 hours.`;
-          await bot.sendMessage(msg.chat.id, message);
-          return;
-        }
-
-        if (cacheClient.has(CacheAddress)) {
-          const drippedMessage = `\u{1F6B7} ${targetAddress} has already dripped, you can only drip once in 12 hours.`;
-          await bot.sendMessage(msg.chat.id, drippedMessage);
-          return;
-        }
-
         // make transactions
         const transactions = [
           // api.tx.currencies.transfer(targetAddress, { "Token": "DOT" }, amount.dot * unit),
@@ -120,11 +123,10 @@ class Telegram {
         // message += `View on [SubScan](https://bifrost.subscan.io/extrinsic/ ${txHash.toHex()}`;
         await bot.sendMessage(msg.chat.id, message, {parse_mode: 'Markdown'});
 
-        cacheClient.set(CacheId, 'true', CacheTTL)
-        cacheClient.set(CacheAddress, 'true', CacheTTL)
-
         await logger.setMsg(`${targetAddress} => txHASH: ${txHash.toHex()}`).console().file();
       } catch (error) {
+        cacheClient.del(CacheId);
+        cacheClient.del(CacheAddress);
         await logger.setMsg(error).console().file();
         let message = `@${msg.from.username} Currently busy, please try again later!`;
         await bot.sendMessage(msg.chat.id, message);
