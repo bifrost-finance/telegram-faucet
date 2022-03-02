@@ -125,8 +125,6 @@ class Telegram {
 
         await logger.setMsg(`${targetAddress} => txHASH: ${txHash.toHex()}`).console().file();
       } catch (error) {
-        cacheClient.del(CacheId);
-        cacheClient.del(CacheAddress);
         await logger.setMsg(error).console().file();
         let message = `@${msg.from.username} Currently busy, please try again later!`;
         await bot.sendMessage(msg.chat.id, message);
