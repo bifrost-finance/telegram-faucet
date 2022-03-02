@@ -55,6 +55,14 @@ class Telegram {
       }
     ));
 
+    const blacklist = "'c9eHvgbxTFzijvY3AnAKiRTHhi2hzS5SLCPzCkb4jP79MLu', 'fFjUFbokagaDRQUDzVhDcMZQaDwQvvha74RMZnyoSWNpiBQ', 'fBAbVJAsbWsKTedTVYGrBB3Usm6Vx635z1N9PX2tZ2boT37', 'e2s2dTSWe9kHebF2FCbPGbXftDT7fY5AMDfib3j86zSi3v7', \
+    'eKTh3hnBLhBQWgiawDCjKZxLkhVJQ1h81og78EJLZrd3qzT', 'eocZB7kXvmy9JvuogD9dca9SKD84WdX5sgeG6yqEyFBArUJ', 'g7bJJiaWP4Wvzoe8FjkcfioUafhJcBxTDXRVBYh32NaBokw', \
+    'fdCsyoMxbfz3UH9qRVBVnVBKAgEbJW22Y6xKbQ8t1i8Vp5u', 'fYXnD8KFa1cDA9EsgNmU2HiadFkbkScupJYtipQqk1c7Uft', 'fPhx4JSqwBxjt4ZAWLVNgN5FienAzbQjmgYzoXPtNYnfKav', \
+    'gXNTa1XjwS4J4PsU1izyZ4b1mkdquFWo53c2y3y9mLDkq9U', 'dommmYS37BPtetRkRNvh8jf59dX5ifEEPgGAy4FDz9AuLog', 'eYSUYMraFTiQCCivJHtTCsiGv1M8ytxd7mkZ3SSQ2kG7aAN', \
+    'cuVRDw9JXy6aswyXS7zb7iTfQVqFfxytUW42KuydAjnWuPx', 'h7gzM5XFVdHjMUGjxJ7CTHiksXTYGreu4445nWvm8HWv4Gp', 'gu19MAFrnWqipYfnDpMfJWqmCs6tj6z5ezsuzS9UKmFiQua', \
+    'c4MyCbpbKBarQ1zdAXNPk7qYsaBcT2V8HyRskzEAJVofnhT', 'gcFS79GcKFGjcjHCqkZ4oGaxk9VkN3u9hU9ReeJb5J3KcKt', 'emEzHbtZbEWoTHGTHjsW9CccTyiS5xewq1svU9CkyMoskho', \
+    'gCiibGsrpxUcMq49LCgDfGMyw65GEMebspUYa4jGp8KuojZ'";
+
     bot.onText(/^!help$/, async function onLoveText (msg) {
       await bot.sendMessage(msg.chat.id, Telegram.helpMessage(), {parse_mode: 'Markdown'});
     });
@@ -132,7 +140,7 @@ class Telegram {
     });
 
     bot.onText(/^!rank/, async function onLoveText (msg) {
-      const sums = await db.any("SELECT sum(balance) from parachain_staking_rewardeds where account NOT IN ('c9eHvgbxTFzijvY3AnAKiRTHhi2hzS5SLCPzCkb4jP79MLu', 'fFjUFbokagaDRQUDzVhDcMZQaDwQvvha74RMZnyoSWNpiBQ', 'fBAbVJAsbWsKTedTVYGrBB3Usm6Vx635z1N9PX2tZ2boT37', 'e2s2dTSWe9kHebF2FCbPGbXftDT7fY5AMDfib3j86zSi3v7')");
+      const sums = await db.any("SELECT sum(balance) from parachain_staking_rewardeds where account NOT IN (" + blacklist + ")");
       const sum = new BigNumber(sums[0].sum);
       const bnc_reward = new BigNumber(20000);
 
@@ -149,7 +157,7 @@ class Telegram {
         return;
       }
 
-      const account = await db.any("select * from (SELECT account,sum(balance),rank() over(order by SUM(balance) desc) from parachain_staking_rewardeds where account NOT IN ('c9eHvgbxTFzijvY3AnAKiRTHhi2hzS5SLCPzCkb4jP79MLu', 'fFjUFbokagaDRQUDzVhDcMZQaDwQvvha74RMZnyoSWNpiBQ', 'fBAbVJAsbWsKTedTVYGrBB3Usm6Vx635z1N9PX2tZ2boT37', 'e2s2dTSWe9kHebF2FCbPGbXftDT7fY5AMDfib3j86zSi3v7') GROUP by account) t where t.account= $1",targetAddress);
+      const account = await db.any("select * from (SELECT account,sum(balance),rank() over(order by SUM(balance) desc) from parachain_staking_rewardeds where account NOT IN (" + blacklist + ") GROUP by account) t where t.account= $1",targetAddress);
       let account_bnc = new BigNumber(account[0].sum).dividedBy(sum).multipliedBy(bnc_reward);
       account_bnc = account_bnc.isNaN() ? 0:account_bnc.toFixed(2);
       let message = `\u{1F3AF} Ranking: ${account[0].rank}\n\u{1F505} Rewards (est.): ${account_bnc} BNC\n\u{1F334} Address: ${targetAddress}`
@@ -158,13 +166,13 @@ class Telegram {
     });
 
     bot.onText(/^!top$/, async function onLoveText (msg) {
-      const sums = await db.any("SELECT sum(balance) from parachain_staking_rewardeds where account NOT IN ('c9eHvgbxTFzijvY3AnAKiRTHhi2hzS5SLCPzCkb4jP79MLu', 'fFjUFbokagaDRQUDzVhDcMZQaDwQvvha74RMZnyoSWNpiBQ', 'fBAbVJAsbWsKTedTVYGrBB3Usm6Vx635z1N9PX2tZ2boT37', 'e2s2dTSWe9kHebF2FCbPGbXftDT7fY5AMDfib3j86zSi3v7')");
+      const sums = await db.any("SELECT sum(balance) from parachain_staking_rewardeds where account NOT IN (" + blacklist + ")");
       const sum = new BigNumber(sums[0].sum);
       const bnc_reward = new BigNumber(20000);
 
       let message =
       `<pre>\u{1F505} Top 30 List\n`;
-      let results = await db.any("SELECT account,sum(balance) as bnc from parachain_staking_rewardeds where account NOT IN ('c9eHvgbxTFzijvY3AnAKiRTHhi2hzS5SLCPzCkb4jP79MLu', 'fFjUFbokagaDRQUDzVhDcMZQaDwQvvha74RMZnyoSWNpiBQ', 'fBAbVJAsbWsKTedTVYGrBB3Usm6Vx635z1N9PX2tZ2boT37', 'e2s2dTSWe9kHebF2FCbPGbXftDT7fY5AMDfib3j86zSi3v7') GROUP by account ORDER BY bnc DESC LIMIT 30");
+      let results = await db.any("SELECT account,sum(balance) as bnc from parachain_staking_rewardeds where account NOT IN (" + blacklist + ") GROUP by account ORDER BY bnc DESC LIMIT 30");
       results.forEach(value =>{
         let percentage = BigNumber(value.bnc).multipliedBy(100).dividedBy(sum).toFixed(2);
         value.percentage = percentage + '%';
